@@ -7,10 +7,11 @@
 
 > **Verified AI answers from your documents.** Every response includes source citations, confidence scores, and an audit trail — or we don't answer at all.
 
-Official Python SDK for the [Wauldo API](https://wauldo.com) — the AI inference layer with smart model routing and zero hallucinations.
+Official Python SDK for the [Wauldo API](https://wauldo.com) — the AI inference layer with smart model routing, zero hallucinations, and standalone fact-checking.
 
 ## Why Wauldo?
 
+- **Fact-Check API** — verify any claim against source context, get verdict (verified/weak/rejected), action (allow/review/block), and structured reason
 - **Zero hallucinations** — every answer is verified against source documents
 - **Smart model routing** — auto-selects the cheapest model that meets quality (save 40-80% on AI costs)
 - **One API, 7+ providers** — OpenAI, Anthropic, Google, Qwen, Meta, Mistral, DeepSeek with automatic fallback
