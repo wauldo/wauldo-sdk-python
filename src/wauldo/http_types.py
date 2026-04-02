@@ -175,3 +175,31 @@ class RagQueryResponse(BaseModel):
 
 class OrchestratorResponse(BaseModel):
     final_output: str
+
+
+# ── Fact-Check ──────────────────────────────────────────────────────────
+
+
+class ClaimResult(BaseModel):
+    text: str
+    claim_type: str
+    supported: bool
+    confidence: float
+    confidence_label: str
+    verdict: str
+    action: str
+    reason: Optional[str] = None
+    evidence: Optional[str] = None
+
+
+class FactCheckResponse(BaseModel):
+    verdict: str
+    action: str
+    hallucination_rate: float
+    mode: str
+    total_claims: int
+    supported_claims: int
+    confidence: float
+    claims: list[ClaimResult]
+    mode_warning: Optional[str] = None
+    processing_time_ms: int

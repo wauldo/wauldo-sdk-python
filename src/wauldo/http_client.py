@@ -14,6 +14,7 @@ from .http_types import (
     ChatRequest,
     ChatResponse,
     EmbeddingResponse,
+    FactCheckResponse,
     ModelList,
     OrchestratorResponse,
     RagQueryResponse,
@@ -210,6 +211,28 @@ class HttpClient:
         """POST /v1/orchestrator/parallel -- Run all 4 specialists in parallel."""
         data = self._request("POST", "/v1/orchestrator/parallel", {"prompt": prompt})
         return OrchestratorResponse.model_validate_json(data)
+
+    # ── Fact-Check endpoints ────────────────────────────────────────────
+
+    def fact_check(
+        self,
+        text: str,
+        source_context: str,
+        mode: str = "lexical",
+    ) -> FactCheckResponse:
+        """POST /v1/fact-check -- Verify claims against source context.
+
+        Args:
+            text: Text containing claims to verify.
+            source_context: Source document to verify against.
+            mode: Verification mode (lexical, hybrid, semantic).
+
+        Returns:
+            FactCheckResponse with verdict, action, and per-claim results.
+        """
+        body: dict = {"text": text, "source_context": source_context, "mode": mode}
+        data = self._request("POST", "/v1/fact-check", body)
+        return FactCheckResponse.model_validate_json(data)
 
     # ── Convenience helpers ──────────────────────────────────────────────
 

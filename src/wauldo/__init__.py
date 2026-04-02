@@ -23,7 +23,9 @@ from .http_types import (
 from .http_types import (
     ChatRequest,
     ChatResponse,
+    ClaimResult,
     EmbeddingResponse,
+    FactCheckResponse,
     ModelList,
     OrchestratorResponse,
     RagAuditInfo,
@@ -66,6 +68,8 @@ __all__ = [
     "RagQueryResponse",
     "RagSource",
     "RagUploadResponse",
+    "ClaimResult",
+    "FactCheckResponse",
     # Exceptions
     "WauldoError",
     "AgentConnectionError",

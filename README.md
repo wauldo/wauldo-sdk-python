@@ -90,6 +90,20 @@ reply = conv.say("What are list comprehensions?")
 follow_up = conv.say("Give me a nested example")
 ```
 
+### Fact-Check — Verify Claims
+
+```python
+result = client.fact_check(
+    text="Returns are accepted within 60 days.",
+    source_context="Our policy allows returns within 14 days.",
+    mode="lexical",
+)
+print(result.verdict)  # "rejected"
+print(result.action)   # "block"
+for claim in result.claims:
+    print(f"{claim.text} → {claim.verdict} ({claim.reason})")
+```
+
 ## Error Handling
 
 ```python
