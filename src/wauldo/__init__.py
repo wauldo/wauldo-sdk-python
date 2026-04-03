@@ -23,9 +23,12 @@ from .http_types import (
 from .http_types import (
     ChatRequest,
     ChatResponse,
+    CitationDetail,
     ClaimResult,
     EmbeddingResponse,
     FactCheckResponse,
+    SourceChunk,
+    VerifyCitationResponse,
     ModelList,
     OrchestratorResponse,
     RagAuditInfo,
@@ -70,6 +73,9 @@ __all__ = [
     "RagUploadResponse",
     "ClaimResult",
     "FactCheckResponse",
+    "CitationDetail",
+    "SourceChunk",
+    "VerifyCitationResponse",
     # Exceptions
     "WauldoError",
     "AgentConnectionError",

@@ -234,6 +234,32 @@ class HttpClient:
         data = self._request("POST", "/v1/fact-check", body)
         return FactCheckResponse.model_validate_json(data)
 
+    def verify_citation(
+        self,
+        text: str,
+        sources: "list[dict] | None" = None,
+        threshold: "float | None" = None,
+    ) -> "VerifyCitationResponse":
+        """POST /v1/verify -- Verify citations in AI-generated text.
+
+        Args:
+            text: AI-generated text with or without citations.
+            sources: Optional source chunks [{"name": "...", "content": "..."}].
+            threshold: Minimum citation ratio (0.0-1.0, default 0.5).
+
+        Returns:
+            VerifyCitationResponse with citation_ratio, uncited_sentences, phantom detection.
+        """
+        from .http_types import VerifyCitationResponse
+
+        body: dict = {"text": text}
+        if sources is not None:
+            body["sources"] = sources
+        if threshold is not None:
+            body["threshold"] = threshold
+        data = self._request("POST", "/v1/verify", body)
+        return VerifyCitationResponse.model_validate_json(data)
+
     # ── Convenience helpers ──────────────────────────────────────────────
 
     def conversation(

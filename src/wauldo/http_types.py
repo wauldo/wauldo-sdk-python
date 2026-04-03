@@ -203,3 +203,34 @@ class FactCheckResponse(BaseModel):
     claims: list[ClaimResult]
     mode_warning: Optional[str] = None
     processing_time_ms: int
+
+
+# ── Citation Verify ────────────────────────────────────────────────────
+
+
+class SourceChunk(BaseModel):
+    name: str
+    content: str
+
+
+class CitationDetail(BaseModel):
+    citation: str
+    source_name: str
+    is_valid: bool
+
+
+class VerifyCitationRequest(BaseModel):
+    text: str
+    sources: Optional[list[SourceChunk]] = None
+    threshold: Optional[float] = None
+
+
+class VerifyCitationResponse(BaseModel):
+    citation_ratio: float
+    has_sufficient_citations: bool
+    sentence_count: int
+    citation_count: int
+    uncited_sentences: list[str]
+    citations: Optional[list[CitationDetail]] = None
+    phantom_count: Optional[int] = None
+    processing_time_ms: int
