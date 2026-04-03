@@ -11,7 +11,8 @@ Official Python SDK for the [Wauldo API](https://wauldo.com) — the AI inferenc
 
 ## Why Wauldo?
 
-- **Fact-Check API** — verify any claim against source context, get verdict (verified/weak/rejected), action (allow/review/block), and structured reason
+- **Citation Verify API** — detect uncited sentences, phantom citations, and measure coverage ratio. No LLM needed
+- **Fact-Check API** — verify any claim against source with 3 modes (lexical, hybrid, semantic). Get verdict, action, and structured reason
 - **Zero hallucinations** — every answer is verified against source documents
 - **Smart model routing** — auto-selects the cheapest model that meets quality (save 40-80% on AI costs)
 - **One API, 7+ providers** — OpenAI, Anthropic, Google, Qwen, Meta, Mistral, DeepSeek with automatic fallback
