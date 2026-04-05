@@ -22,13 +22,16 @@ from .http_types import (
     ChatMessage as HttpChatMessage,
 )
 from .http_types import (
+    AnalyticsResponse,
     ChatRequest,
     ChatResponse,
     CitationDetail,
     ClaimResult,
     EmbeddingResponse,
     FactCheckResponse,
+    InsightsResponse,
     SourceChunk,
+    TrafficSummary,
     VerifyCitationResponse,
     ModelList,
     OrchestratorResponse,
@@ -82,6 +85,9 @@ __all__ = [
     "CitationDetail",
     "SourceChunk",
     "VerifyCitationResponse",
+    "AnalyticsResponse",
+    "InsightsResponse",
+    "TrafficSummary",
     # Exceptions
     "WauldoError",
     "AgentConnectionError",
