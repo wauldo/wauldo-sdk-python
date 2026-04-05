@@ -136,13 +136,73 @@ print(reply)
 
 ### Streaming
 
+**Sync — print tokens as they arrive:**
+
 ```python
+import sys
 from wauldo import ChatRequest, HttpChatMessage
 
-request = ChatRequest(model="auto", messages=[HttpChatMessage.user("Hello!")])
+request = ChatRequest(
+    model="auto",
+    messages=[
+        HttpChatMessage.system("You are a helpful assistant."),
+        HttpChatMessage.user("Explain Python decorators"),
+    ],
+)
+
 for chunk in client.chat_stream(request):
-    print(chunk, end="", flush=True)
+    sys.stdout.write(chunk)
+    sys.stdout.flush()
+print()
 ```
+
+**Async streaming** (requires `pip install wauldo[async]`):
+
+```python
+import asyncio
+from wauldo import AsyncHttpClient, ChatRequest, HttpChatMessage
+
+async def main():
+    async with AsyncHttpClient(base_url="https://api.wauldo.com", api_key="YOUR_API_KEY") as client:
+        req = ChatRequest.quick("auto", "How does HTTP/2 multiplexing work?")
+        async for token in client.chat_stream(req):
+            print(token, end="", flush=True)
+        print()
+
+asyncio.run(main())
+```
+
+**RAG query with streaming answer:**
+
+```python
+client.rag_upload(content="Our SLA guarantees 99.9% uptime...", filename="sla.txt")
+
+req = ChatRequest(
+    model="auto",
+    messages=[HttpChatMessage.user("What uptime does the SLA guarantee?")],
+)
+for chunk in client.chat_stream(req):
+    print(chunk, end="", flush=True)
+print()
+```
+
+**Error handling during streaming:**
+
+```python
+from wauldo import WauldoError, ServerError, AgentConnectionError
+
+try:
+    for chunk in client.chat_stream(request):
+        print(chunk, end="", flush=True)
+except AgentConnectionError:
+    print("\n[connection lost]")
+except ServerError as e:
+    print(f"\n[server error: {e}]")
+except WauldoError as e:
+    print(f"\n[error: {e}]")
+```
+
+See [`examples/streaming_chat.py`](examples/streaming_chat.py) and [`examples/async_streaming.py`](examples/async_streaming.py) for runnable scripts.
 
 ---
 
