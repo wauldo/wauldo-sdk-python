@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-**RAG API that verifies answers before returning them.**
+> **Verified AI answers from your documents — or no answer at all.**
 
 `0% hallucination` | `83% accuracy` | `61 eval tasks` | `14 LLMs tested`
 
@@ -23,11 +23,17 @@ client.rag_upload(content="Our refund policy allows returns within 14 days...", 
 
 # Ask a question — answer is verified against the source
 result = client.rag_query("What is the refund policy?")
-print(result.answer)      # "Returns are accepted within 14 days."
-print(result.sources)     # [Source with citations]
+print(result.answer)
+print(result.sources)
 ```
 
-If the answer can't be verified against the source, Wauldo returns "insufficient evidence" instead of guessing.
+```
+Output:
+Answer: Returns are accepted within 14 days of purchase.
+Sources: policy.txt — "Our refund policy allows returns within 14 days"
+```
+
+No verification = no answer. If it can't be grounded, Wauldo returns "insufficient evidence" instead of guessing.
 
 ---
 
@@ -132,6 +138,8 @@ async with AsyncHttpClient(base_url="https://api.wauldo.com", api_key="YOUR_API_
 ```
 
 Install with `pip install wauldo[async]`. All sync methods have async equivalents.
+
+*Async support contributed by [@qorexdev](https://github.com/qorexdev).*
 
 ---
 
