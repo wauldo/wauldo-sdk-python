@@ -34,15 +34,29 @@
 pip install wauldo
 ```
 
+### Try it locally (no API key needed)
+
+```python
+from wauldo import MockHttpClient
+
+client = MockHttpClient(chat_response="Returns are accepted within 60 days.")
+
+client.rag_upload(content="Our refund policy allows returns within 60 days.", filename="policy.txt")
+result = client.rag_query("What is the refund policy?")
+print(result.answer)    # Returns are accepted within 60 days.
+print(result.sources)   # [RagSource(document_id='mock-doc-001', ...)]
+```
+
+Run [`examples/quickstart.py`](examples/quickstart.py) for the full offline walkthrough.
+
+### With a real server
+
 ```python
 from wauldo import HttpClient
 
 client = HttpClient(base_url="https://api.wauldo.com", api_key="YOUR_API_KEY")
 
-# Upload a document
 client.rag_upload(content="Our refund policy allows returns within 60 days...", filename="policy.txt")
-
-# Ask a question — answer is verified against the source
 result = client.rag_query("What is the refund policy?")
 print(result.answer)
 print(result.sources)
@@ -92,15 +106,17 @@ Wauldo:       "Refunds are processed within 60 days"     ← verified
 ### Upload a PDF and ask questions
 
 ```python
-# Upload — text extraction + quality scoring happens server-side
 result = client.upload_file("contract.pdf", title="Q3 Contract")
 print(f"Extracted {result.chunks_count} chunks, quality: {result.quality_label}")
+# -> Extracted 12 chunks, quality: high
 
-# Query
 result = client.rag_query("What are the payment terms?")
 print(f"Answer: {result.answer}")
+# -> Answer: Net 30 from invoice date.
 print(f"Confidence: {result.get_confidence():.0%}")
+# -> Confidence: 94%
 print(f"Grounded: {result.audit.grounded}")
+# -> Grounded: True
 ```
 
 ### Fact-check any LLM output
@@ -301,6 +317,20 @@ client = HttpClient(
 ```
 
 Free tier (300 req/month): [RapidAPI](https://rapidapi.com/binnewzzin/api/smart-rag-api)
+
+---
+
+## Troubleshooting
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `ConnectionError` | Server unreachable | Check `base_url`, make sure the server is running |
+| `ServerError (401)` | Bad API key | Verify your key at [RapidAPI dashboard](https://rapidapi.com/binnewzzin/api/smart-rag-api) |
+| `AgentTimeoutError` | Request took too long | Pass `timeout_ms=30000` or try a smaller document |
+| `ModuleNotFoundError: aiohttp` | Async extras not installed | Run `pip install wauldo[async]` |
+| `ImportError: MockHttpClient` | Old SDK version | Run `pip install --upgrade wauldo` |
+
+Still stuck? [Open an issue](https://github.com/wauldo/wauldo-sdk-python/issues/new).
 
 ---
 
