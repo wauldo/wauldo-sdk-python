@@ -204,6 +204,15 @@ except WauldoError as e:
 
 See [`examples/streaming_chat.py`](examples/streaming_chat.py) and [`examples/async_streaming.py`](examples/async_streaming.py) for runnable scripts.
 
+### Real-world use cases
+
+| Example | Description |
+|---------|-------------|
+| [`pdf_qa.py`](examples/pdf_qa.py) | Upload a product manual PDF and ask technical questions |
+| [`support_chatbot.py`](examples/support_chatbot.py) | Build a verified support chatbot from FAQ docs |
+| [`contract_analysis.py`](examples/contract_analysis.py) | Extract clauses from a contract + fact-check claims |
+| [`multi_document.py`](examples/multi_document.py) | Cross-reference answers across multiple documents |
+
 ---
 
 ## Async Support
