@@ -256,3 +256,66 @@ class VerifyCitationResponse(BaseModel):
     citations: Optional[list[CitationDetail]] = None
     phantom_count: Optional[int] = None
     processing_time_ms: int
+
+
+# ── Analytics & Insights ──────────────────────────────────────────────
+
+
+class TokenStats(BaseModel):
+    baseline_total: int = 0
+    real_total: int = 0
+    saved_total: int = 0
+    saved_percent_avg: float = 0.0
+    saved_percent_min: Optional[float] = None
+    saved_percent_max: Optional[float] = None
+
+
+class CostStats(BaseModel):
+    estimated_usd_saved: float = 0.0
+
+
+class InsightsResponse(BaseModel):
+    tig_key: str = ""
+    total_requests: int = 0
+    intelligence_requests: int = 0
+    fallback_requests: int = 0
+    tokens: TokenStats = TokenStats()
+    cost: CostStats = CostStats()
+
+
+class CacheMetrics(BaseModel):
+    total_requests: int = 0
+    cache_hit_rate: float = 0.0
+    avg_latency_ms: float = 0.0
+    p95_latency_ms: float = 0.0
+
+
+class TokenSavings(BaseModel):
+    total_baseline: int = 0
+    total_real: int = 0
+    total_saved: int = 0
+    avg_savings_percent: float = 0.0
+
+
+class AnalyticsResponse(BaseModel):
+    cache: CacheMetrics = CacheMetrics()
+    tokens: TokenSavings = TokenSavings()
+    uptime_secs: int = 0
+
+
+class TenantTraffic(BaseModel):
+    tenant_id: str = ""
+    requests_today: int = 0
+    tokens_used: int = 0
+    success_rate: float = 0.0
+    avg_latency_ms: int = 0
+
+
+class TrafficSummary(BaseModel):
+    total_requests_today: int = 0
+    total_tokens_today: int = 0
+    top_tenants: list[TenantTraffic] = []
+    error_rate: float = 0.0
+    avg_latency_ms: int = 0
+    p95_latency_ms: int = 0
+    uptime_secs: int = 0

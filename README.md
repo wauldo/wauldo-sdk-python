@@ -258,6 +258,7 @@ All sync methods have async equivalents. *Contributed by [@qorexdev](https://git
 - **Pre-generation fact extraction** — numbers, dates, limits injected as constraints before the LLM call
 - **Post-generation grounding check** — every answer verified against sources
 - **Citation validation** — detects phantom references
+- **Analytics & Insights** — track token savings, cache performance, cost per hour, and per-tenant traffic
 - **Fact-check API** — verify any claim against any source (3 modes: lexical, hybrid, semantic)
 - **Native PDF/DOCX upload** — server-side extraction with quality scoring
 - **Smart model routing** — auto-selects cheapest model that meets quality

@@ -324,6 +324,26 @@ class HttpClient:
         data = self._request("POST", "/v1/verify", body)
         return VerifyCitationResponse.model_validate_json(data)
 
+    # ── Analytics & Insights endpoints ──────────────────────────────────
+
+    def get_insights(self) -> "InsightsResponse":
+        """GET /v1/insights -- ROI metrics for your API key."""
+        from .http_types import InsightsResponse
+        data = self._request("GET", "/v1/insights")
+        return InsightsResponse.model_validate_json(data)
+
+    def get_analytics(self, minutes: int = 60) -> "AnalyticsResponse":
+        """GET /v1/analytics -- Usage analytics and cache performance."""
+        from .http_types import AnalyticsResponse
+        data = self._request("GET", f"/v1/analytics?minutes={minutes}")
+        return AnalyticsResponse.model_validate_json(data)
+
+    def get_analytics_traffic(self) -> "TrafficSummary":
+        """GET /v1/analytics/traffic -- Per-tenant traffic monitoring."""
+        from .http_types import TrafficSummary
+        data = self._request("GET", "/v1/analytics/traffic")
+        return TrafficSummary.model_validate_json(data)
+
     # ── Convenience helpers ──────────────────────────────────────────────
 
     def conversation(
