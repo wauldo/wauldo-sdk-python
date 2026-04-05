@@ -5,80 +5,110 @@
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-> **Verified AI answers from your documents.** Every response includes source citations, confidence scores, and an audit trail — or we don't answer at all.
+**RAG API that verifies answers before returning them.**
 
-Official Python SDK for the [Wauldo API](https://wauldo.com) — the AI inference layer with smart model routing, zero hallucinations, and standalone fact-checking.
+`0% hallucination` | `83% accuracy` | `61 eval tasks` | `14 LLMs tested`
 
-## Why Wauldo?
-
-- **Native PDF & DOCX Upload** — upload files directly, server-side text extraction with document quality scoring
-- **Citation Verify API** — detect uncited sentences, phantom citations, and measure coverage ratio. No LLM needed
-- **Fact-Check API** — verify any claim against source with 3 modes (lexical, hybrid, semantic). Get verdict, action, and structured reason
-- **Zero hallucinations** — every answer is verified against source documents
-- **Smart model routing** — auto-selects the cheapest model that meets quality (save 40-80% on AI costs)
-- **One API, 7+ providers** — OpenAI, Anthropic, Google, Qwen, Meta, Mistral, DeepSeek with automatic fallback
-- **OpenAI-compatible** — swap your `base_url`, keep your existing code
-- **Full audit trail** — confidence score, grounded status, model used, latency on every response
-
-## Quick Start
+```bash
+pip install wauldo
+```
 
 ```python
 from wauldo import HttpClient
 
 client = HttpClient(base_url="https://api.wauldo.com", api_key="YOUR_API_KEY")
 
-reply = client.chat_simple("auto", "What is Python?")
-print(reply)
+# Upload a document
+client.rag_upload(content="Our refund policy allows returns within 14 days...", filename="policy.txt")
+
+# Ask a question — answer is verified against the source
+result = client.rag_query("What is the refund policy?")
+print(result.answer)      # "Returns are accepted within 14 days."
+print(result.sources)     # [Source with citations]
 ```
 
-## Installation
+If the answer can't be verified against the source, Wauldo returns "insufficient evidence" instead of guessing.
 
-```bash
-pip install wauldo
+---
 
-# With async support
-pip install wauldo[async]
-```
+## Why Wauldo?
 
-**Requirements:** Python 3.9+
+Most RAG APIs: **retrieve → generate → hope it's correct.**
 
-## Features
+Wauldo: **retrieve → extract facts → generate → verify → return or refuse.**
 
-### Chat Completions
+| What | How |
+|------|-----|
+| **Zero hallucinations** | Every answer verified against source documents |
+| **Fact-Check API** | Verify any claim against any source (3 modes) |
+| **Citation Verify** | Detect phantom citations and uncited claims |
+| **PDF & DOCX Upload** | Server-side extraction with quality scoring |
+| **Smart routing** | Auto-selects cheapest model that meets quality |
+| **OpenAI-compatible** | Swap your `base_url`, keep your existing code |
+| **Async support** | Full async/await with `pip install wauldo[async]` |
+
+---
+
+## Examples
+
+### Upload a document and ask questions
 
 ```python
-from wauldo import HttpClient, ChatRequest, HttpChatMessage
+from wauldo import HttpClient
 
 client = HttpClient(base_url="https://api.wauldo.com", api_key="YOUR_API_KEY")
 
-request = ChatRequest(
-    model="auto",
-    messages=[
-        HttpChatMessage.system("You are a helpful assistant."),
-        HttpChatMessage.user("Explain Python decorators"),
-    ],
-)
-response = client.chat(request)
-print(response.choices[0].message.content)
-```
-
-### RAG — Upload & Query
-
-```python
-# Upload a document
+# Upload
 upload = client.rag_upload(content="Contract text here...", filename="contract.txt")
 print(f"Indexed {upload.chunks_count} chunks")
 
-# Query with verified answer
+# Query — answer is verified against the source
 result = client.rag_query("What are the payment terms?")
 print(f"Answer: {result.answer}")
 print(f"Confidence: {result.get_confidence():.0%}")
 print(f"Grounded: {result.audit.grounded}")
-for source in result.sources:
-    print(f"  Source ({source.score:.0%}): {source.content[:80]}")
 ```
 
-### Streaming (SSE)
+### Upload a PDF directly
+
+```python
+result = client.upload_file("contract.pdf", title="Q3 Contract")
+print(f"Extracted {result.chunks_count} chunks, quality: {result.quality_label}")
+```
+
+### Fact-check an LLM answer
+
+```python
+result = client.fact_check(
+    text="Returns are accepted within 60 days.",
+    source_context="Our policy allows returns within 14 days.",
+    mode="lexical",
+)
+print(result.verdict)  # "rejected"
+print(result.action)   # "block"
+print(result.claims[0].reason)  # "numerical_mismatch"
+```
+
+### Verify citations
+
+```python
+result = client.verify_citation(
+    text="The policy covers damage [Source: Manual]. Warranty is unlimited.",
+    sources=[{"name": "Manual", "content": "Coverage for accidental damage only."}],
+)
+print(result.citation_ratio)     # 0.5
+print(result.uncited_sentences)  # ["Warranty is unlimited."]
+print(result.phantom_count)      # 0
+```
+
+### Chat (OpenAI-compatible)
+
+```python
+reply = client.chat_simple("auto", "Explain Python decorators")
+print(reply)
+```
+
+### Streaming
 
 ```python
 from wauldo import ChatRequest, HttpChatMessage
@@ -94,38 +124,16 @@ for chunk in client.chat_stream(request):
 from wauldo import AsyncHttpClient
 
 async with AsyncHttpClient(base_url="https://api.wauldo.com", api_key="YOUR_API_KEY") as client:
-    # Verified Q&A
     result = await client.rag_query("What are the payment terms?")
     print(result.answer)
 
-    # Streaming
     async for chunk in client.chat_stream(request):
         print(chunk, end="", flush=True)
 ```
 
 Install with `pip install wauldo[async]`. All sync methods have async equivalents.
 
-### Conversation Helper
-
-```python
-conv = client.conversation(system="You are an expert on Python.", model="auto")
-reply = conv.say("What are list comprehensions?")
-follow_up = conv.say("Give me a nested example")
-```
-
-### Fact-Check — Verify Claims
-
-```python
-result = client.fact_check(
-    text="Returns are accepted within 60 days.",
-    source_context="Our policy allows returns within 14 days.",
-    mode="lexical",
-)
-print(result.verdict)  # "rejected"
-print(result.action)   # "block"
-for claim in result.claims:
-    print(f"{claim.text} → {claim.verdict} ({claim.reason})")
-```
+---
 
 ## Error Handling
 
@@ -142,6 +150,8 @@ except WauldoError as e:
     print(f"SDK error: {e}")
 ```
 
+---
+
 ## RapidAPI
 
 ```python
@@ -154,19 +164,17 @@ client = HttpClient(
 )
 ```
 
-Get your free API key (300 req/month): [RapidAPI](https://rapidapi.com/binnewzzin/api/smart-rag-api)
+Free tier (300 req/month): [RapidAPI](https://rapidapi.com/binnewzzin/api/smart-rag-api)
+
+---
 
 ## Links
 
-- [Website](https://wauldo.com)
-- [Documentation](https://wauldo.com/docs)
-- [Live Demo](https://api.wauldo.com/demo)
-- [Cost Calculator](https://wauldo.com/calculator)
-- [Status](https://wauldo.com/status)
+- [Website](https://wauldo.com) | [Docs](https://wauldo.com/docs) | [Demo](https://wauldo.com/demo) | [Benchmarks](https://dev.to/wauldo/how-we-achieved-0-hallucination-rate-in-our-rag-api-with-benchmarks-4g54)
 
 ## Contributing
 
-Found a bug? Have a feature request? [Open an issue](https://github.com/wauldo/wauldo-sdk-python/issues).
+Found a bug? Have a feature request? [Open an issue](https://github.com/wauldo/wauldo-sdk-python/issues). PRs welcome — check the [good first issues](https://github.com/wauldo/wauldo-sdk-python/labels/good%20first%20issue).
 
 ## Contributors
 
