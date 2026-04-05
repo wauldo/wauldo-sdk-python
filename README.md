@@ -11,6 +11,7 @@ Official Python SDK for the [Wauldo API](https://wauldo.com) — the AI inferenc
 
 ## Why Wauldo?
 
+- **Native PDF & DOCX Upload** — upload files directly, server-side text extraction with document quality scoring
 - **Citation Verify API** — detect uncited sentences, phantom citations, and measure coverage ratio. No LLM needed
 - **Fact-Check API** — verify any claim against source with 3 modes (lexical, hybrid, semantic). Get verdict, action, and structured reason
 - **Zero hallucinations** — every answer is verified against source documents

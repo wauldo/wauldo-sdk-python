@@ -35,6 +35,8 @@ from .http_types import (
     RagQueryResponse,
     RagSource,
     RagUploadResponse,
+    UploadFileResponse,
+    DocumentQuality,
 )
 from .mock_client import MockHttpClient
 from .models import (
@@ -71,6 +73,8 @@ __all__ = [
     "RagQueryResponse",
     "RagSource",
     "RagUploadResponse",
+    "UploadFileResponse",
+    "DocumentQuality",
     "ClaimResult",
     "FactCheckResponse",
     "CitationDetail",

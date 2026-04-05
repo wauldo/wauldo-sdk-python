@@ -120,6 +120,28 @@ class RagUploadResponse(BaseModel):
     chunks_count: int
 
 
+class DocumentQuality(BaseModel):
+    """Quality assessment of uploaded document."""
+
+    score: float
+    label: str
+    word_count: int
+    line_density: float
+    avg_line_length: float
+    paragraph_count: int
+
+
+class UploadFileResponse(BaseModel):
+    """Response from POST /v1/upload-file (PDF, DOCX, text, image)."""
+
+    document_id: str
+    chunks_count: int
+    indexed_at: str
+    content_type: str
+    trace_id: str
+    quality: Optional[DocumentQuality] = None
+
+
 class RagSource(BaseModel):
     document_id: str
     content: str

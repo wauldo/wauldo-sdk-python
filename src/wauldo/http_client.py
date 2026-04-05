@@ -19,6 +19,7 @@ from .http_types import (
     OrchestratorResponse,
     RagQueryResponse,
     RagUploadResponse,
+    UploadFileResponse,
 )
 
 if TYPE_CHECKING:
@@ -73,6 +74,35 @@ class HttpClient:
         url = f"{self.base_url}{path}"
         data = json.dumps(body).encode() if body else None
         return self._transport.execute(method, url, data=data, timeout_ms=timeout_ms)
+
+    def _request_multipart(
+        self, method: str, path: str, files: dict, form_data: dict, timeout_ms: Optional[int] = None,
+    ) -> bytes:
+        """Send multipart/form-data request (for file uploads)."""
+        import io
+        boundary = "----WauldoSDKBoundary"
+        body_parts: list[bytes] = []
+        for key, (filename, fileobj) in files.items():
+            body_parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{key}\"; filename=\"{filename}\"\r\nContent-Type: application/octet-stream\r\n\r\n".encode())
+            body_parts.append(fileobj.read() if hasattr(fileobj, "read") else fileobj)
+            body_parts.append(b"\r\n")
+        for key, value in form_data.items():
+            body_parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{key}\"\r\n\r\n{value}\r\n".encode())
+        body_parts.append(f"--{boundary}--\r\n".encode())
+        data = b"".join(body_parts)
+
+        url = f"{self.base_url}{path}"
+        # Override Content-Type for multipart
+        old_headers_fn = self._transport._headers_fn
+        def multipart_headers() -> dict[str, str]:
+            h = old_headers_fn()
+            h["Content-Type"] = f"multipart/form-data; boundary={boundary}"
+            return h
+        self._transport._headers_fn = multipart_headers
+        try:
+            return self._transport.execute(method, url, data=data, timeout_ms=timeout_ms)
+        finally:
+            self._transport._headers_fn = old_headers_fn
 
     # ── OpenAI-compatible endpoints ──────────────────────────────────────
 
@@ -167,6 +197,40 @@ class HttpClient:
             body["filename"] = filename
         data = self._request("POST", "/v1/upload", body, timeout_ms=timeout_ms)
         return RagUploadResponse.model_validate_json(data)
+
+    def upload_file(
+        self,
+        file_path: str,
+        title: Optional[str] = None,
+        tags: Optional[str] = None,
+        timeout_ms: Optional[int] = None,
+    ) -> UploadFileResponse:
+        """POST /v1/upload-file -- Upload a file (PDF, DOCX, text, image) for RAG indexing.
+
+        Args:
+            file_path: Path to the file to upload (PDF, DOCX, TXT, etc.).
+            title: Optional document title.
+            tags: Optional comma-separated tags.
+            timeout_ms: Per-request timeout in milliseconds.
+
+        Returns:
+            ``UploadFileResponse`` with document_id, chunks_count, quality scoring.
+        """
+        import os
+        if not os.path.isfile(file_path):
+            raise ValidationError(f"File not found: {file_path}", field="file_path")
+        if os.path.getsize(file_path) > self._MAX_UPLOAD_SIZE:
+            raise ValidationError("File exceeds 10 MB limit", field="file_path")
+
+        files = {"file": (os.path.basename(file_path), open(file_path, "rb"))}
+        form_data: dict[str, str] = {}
+        if title:
+            form_data["title"] = title
+        if tags:
+            form_data["tags"] = tags
+
+        data = self._request_multipart("POST", "/v1/upload-file", files, form_data, timeout_ms)
+        return UploadFileResponse.model_validate_json(data)
 
     def rag_query(
         self,
