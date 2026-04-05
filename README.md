@@ -35,6 +35,9 @@ print(reply)
 
 ```bash
 pip install wauldo
+
+# With async support
+pip install wauldo[async]
 ```
 
 **Requirements:** Python 3.9+
@@ -84,6 +87,23 @@ request = ChatRequest(model="auto", messages=[HttpChatMessage.user("Hello!")])
 for chunk in client.chat_stream(request):
     print(chunk, end="", flush=True)
 ```
+
+### Async Client
+
+```python
+from wauldo import AsyncHttpClient
+
+async with AsyncHttpClient(base_url="https://api.wauldo.com", api_key="YOUR_API_KEY") as client:
+    # Verified Q&A
+    result = await client.rag_query("What are the payment terms?")
+    print(result.answer)
+
+    # Streaming
+    async for chunk in client.chat_stream(request):
+        print(chunk, end="", flush=True)
+```
+
+Install with `pip install wauldo[async]`. All sync methods have async equivalents.
 
 ### Conversation Helper
 
@@ -147,6 +167,10 @@ Get your free API key (300 req/month): [RapidAPI](https://rapidapi.com/binnewzzi
 ## Contributing
 
 Found a bug? Have a feature request? [Open an issue](https://github.com/wauldo/wauldo-sdk-python/issues).
+
+## Contributors
+
+- [@qorexdev](https://github.com/qorexdev) — async client
 
 ## License
 
