@@ -16,6 +16,7 @@ from .exceptions import (
     ValidationError,
     WauldoError,
 )
+from .async_client import AsyncHttpClient
 from .http_client import HttpClient
 from .http_types import (
     ChatMessage as HttpChatMessage,
@@ -60,6 +61,7 @@ __all__ = [
     "AgentClient",
     "AsyncAgentClient",
     # HTTP Client
+    "AsyncHttpClient",
     "HttpClient",
     "MockHttpClient",
     "Conversation",
