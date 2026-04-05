@@ -1,21 +1,34 @@
-# Wauldo Python SDK
+<h1 align="center">Wauldo Python SDK</h1>
 
-[![PyPI](https://img.shields.io/pypi/v/wauldo.svg)](https://pypi.org/project/wauldo/)
-[![Downloads](https://img.shields.io/pypi/dm/wauldo.svg)](https://pypi.org/project/wauldo/)
-[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+<p align="center">
+  <strong>Verified AI answers from your documents — or no answer at all.</strong>
+</p>
 
-## Stop hallucinating RAG answers.
+<p align="center">
+  Most RAG APIs guess. Wauldo verifies.
+</p>
 
-Wauldo is a RAG API that **verifies every answer against your documents**.
+<p align="center">
+  <b>0% hallucination</b> &nbsp;|&nbsp; 83% accuracy &nbsp;|&nbsp; 61 eval tasks &nbsp;|&nbsp; 14 LLMs tested
+</p>
 
-If the answer can't be grounded, it returns "insufficient evidence" instead of guessing.
+<p align="center">
+  <a href="https://pypi.org/project/wauldo/"><img src="https://img.shields.io/pypi/v/wauldo.svg" alt="PyPI" /></a>&nbsp;
+  <a href="https://pypi.org/project/wauldo/"><img src="https://img.shields.io/pypi/dm/wauldo.svg" alt="Downloads" /></a>&nbsp;
+  <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python" />&nbsp;
+  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT" />
+</p>
 
-**`0% hallucination`** | **`83% accuracy`** | **`61 eval tasks`** | **`14 LLMs tested`**
+<p align="center">
+  <a href="https://wauldo.com/demo">Demo</a> &bull;
+  <a href="https://wauldo.com/docs">Docs</a> &bull;
+  <a href="https://rapidapi.com/binnewzzin/api/smart-rag-api">Free API Key</a> &bull;
+  <a href="https://dev.to/wauldo/how-we-achieved-0-hallucination-rate-in-our-rag-api-with-benchmarks-4g54">Benchmarks</a>
+</p>
 
 ---
 
-## Quickstart
+## Quickstart (30 seconds)
 
 ```bash
 pip install wauldo
@@ -27,9 +40,9 @@ from wauldo import HttpClient
 client = HttpClient(base_url="https://api.wauldo.com", api_key="YOUR_API_KEY")
 
 # Upload a document
-client.rag_upload(content="Our refund policy allows returns within 14 days...", filename="policy.txt")
+client.rag_upload(content="Our refund policy allows returns within 60 days...", filename="policy.txt")
 
-# Ask a question
+# Ask a question — answer is verified against the source
 result = client.rag_query("What is the refund policy?")
 print(result.answer)
 print(result.sources)
@@ -37,29 +50,30 @@ print(result.sources)
 
 ```
 Output:
-Answer: Returns are accepted within 14 days of purchase.
-Sources: policy.txt — "Our refund policy allows returns within 14 days"
+Answer: Returns are accepted within 60 days of purchase.
+Sources: policy.txt — "Our refund policy allows returns within 60 days"
+Grounded: true | Confidence: 0.92
 ```
 
-[Try it now](https://wauldo.com/demo) | [Get API key (free)](https://rapidapi.com/binnewzzin/api/smart-rag-api)
+[Try the demo](https://wauldo.com/demo) | [Get a free API key](https://rapidapi.com/binnewzzin/api/smart-rag-api)
 
 ---
 
-## Why Wauldo is different
+## Why Wauldo (and not standard RAG)
 
-Most RAG pipelines:
+**Typical RAG pipeline**
 
 ```
 retrieve → generate → hope it's correct
 ```
 
-Wauldo:
+**Wauldo pipeline**
 
 ```
 retrieve → extract facts → generate → verify → return or refuse
 ```
 
-No verification = no answer.
+If the answer can't be verified, it returns **"insufficient evidence"** instead of guessing.
 
 ### See the difference
 
@@ -78,11 +92,11 @@ Wauldo:       "Refunds are processed within 60 days"     ← verified
 ### Upload a PDF and ask questions
 
 ```python
-# Upload a PDF — text extraction + quality scoring happens server-side
+# Upload — text extraction + quality scoring happens server-side
 result = client.upload_file("contract.pdf", title="Q3 Contract")
 print(f"Extracted {result.chunks_count} chunks, quality: {result.quality_label}")
 
-# Query with verified answer
+# Query
 result = client.rag_query("What are the payment terms?")
 print(f"Answer: {result.answer}")
 print(f"Confidence: {result.get_confidence():.0%}")
@@ -116,7 +130,6 @@ print(result.uncited_sentences)  # ["Warranty is unlimited."]
 ### Chat (OpenAI-compatible)
 
 ```python
-# Drop-in replacement — swap your base_url, keep your code
 reply = client.chat_simple("auto", "Explain Python decorators")
 print(reply)
 ```
@@ -131,37 +144,61 @@ for chunk in client.chat_stream(request):
     print(chunk, end="", flush=True)
 ```
 
-### Async Client
+---
+
+## Async Support
 
 ```bash
 pip install wauldo[async]
 ```
 
 ```python
+import asyncio
 from wauldo import AsyncHttpClient
 
-async with AsyncHttpClient(base_url="https://api.wauldo.com", api_key="YOUR_API_KEY") as client:
-    result = await client.rag_query("What are the payment terms?")
-    print(result.answer)
+async def main():
+    async with AsyncHttpClient(base_url="https://api.wauldo.com", api_key="YOUR_API_KEY") as client:
+        result = await client.rag_query("What are the payment terms?")
+        print(result.answer)
 
-    async for chunk in client.chat_stream(request):
-        print(chunk, end="", flush=True)
+asyncio.run(main())
 ```
 
-*Async support contributed by [@qorexdev](https://github.com/qorexdev).*
+All sync methods have async equivalents. *Contributed by [@qorexdev](https://github.com/qorexdev).*
 
 ---
 
 ## Features
 
-- **Pre-generation fact extraction** — numbers, dates, limits injected as constraints
+- **Pre-generation fact extraction** — numbers, dates, limits injected as constraints before the LLM call
 - **Post-generation grounding check** — every answer verified against sources
 - **Citation validation** — detects phantom references
-- **Fact-check API** — verify any claim against any source (3 modes)
-- **PDF & DOCX native upload** — server-side extraction with quality scoring
+- **Fact-check API** — verify any claim against any source (3 modes: lexical, hybrid, semantic)
+- **Native PDF/DOCX upload** — server-side extraction with quality scoring
 - **Smart model routing** — auto-selects cheapest model that meets quality
 - **OpenAI-compatible** — swap your `base_url`, keep your existing code
 - **Sync + Async** — full async/await support
+
+---
+
+## Built For
+
+- Production RAG systems that need **reliable answers**
+- Teams where **"confidently wrong" is unacceptable**
+- Legal, finance, healthcare, support automation
+- Anyone replacing "hope-based" RAG
+
+---
+
+## Benchmarks
+
+| Metric | Result |
+|--------|--------|
+| Hallucination rate | **0%** |
+| Accuracy | **83%** (17% = correct refusals) |
+| Eval tasks | 61 |
+| LLMs tested | 14 models, 3 runs each |
+| Avg latency | ~1.2s |
 
 ---
 
@@ -197,8 +234,6 @@ client = HttpClient(
 Free tier (300 req/month): [RapidAPI](https://rapidapi.com/binnewzzin/api/smart-rag-api)
 
 ---
-
-[Website](https://wauldo.com) | [Docs](https://wauldo.com/docs) | [Demo](https://wauldo.com/demo) | [Benchmarks](https://dev.to/wauldo/how-we-achieved-0-hallucination-rate-in-our-rag-api-with-benchmarks-4g54)
 
 ## Contributing
 
