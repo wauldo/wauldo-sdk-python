@@ -149,6 +149,17 @@ class MockHttpClient:
         result = self.rag_query(question)
         return result.answer
 
+    def guard(self, text: str, source: str, mode: str = "lexical") -> "GuardResult":
+        """Return mocked guard result."""
+        from .http_types import GuardResult
+        return GuardResult(
+            safe=True,
+            verdict="verified",
+            action="allow",
+            reason=None,
+            confidence=0.95,
+        )
+
     # ── Analytics & Insights ────────────────────────────────────────────
 
     def get_insights(self) -> InsightsResponse:

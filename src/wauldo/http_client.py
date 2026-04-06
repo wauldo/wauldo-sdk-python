@@ -344,6 +344,35 @@ class HttpClient:
         data = self._request("GET", "/v1/analytics/traffic")
         return TrafficSummary.model_validate_json(data)
 
+    def guard(
+        self,
+        text: str,
+        source: str,
+        mode: str = "lexical",
+    ) -> "GuardResult":
+        """Verify an LLM output against a source document.
+
+        Convenience wrapper around fact_check(). Returns a simple
+        safe/unsafe result for use as a hallucination firewall.
+
+        Args:
+            text: The LLM-generated text to verify.
+            source: The source document to verify against.
+            mode: Verification mode — "lexical" (fast), "hybrid", or "semantic".
+
+        Returns:
+            GuardResult with safe, verdict, action, reason, confidence.
+        """
+        from .http_types import GuardResult
+        result = self.fact_check(text=text, source_context=source, mode=mode)
+        return GuardResult(
+            safe=result.claims[0].verdict == "verified" if result.claims else False,
+            verdict=result.claims[0].verdict if result.claims else "rejected",
+            action=result.claims[0].action if result.claims else "block",
+            reason=result.claims[0].reason if result.claims else "no_claims",
+            confidence=result.claims[0].confidence if result.claims else 0.0,
+        )
+
     # ── Convenience helpers ──────────────────────────────────────────────
 
     def conversation(

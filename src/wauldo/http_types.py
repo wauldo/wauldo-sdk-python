@@ -258,6 +258,17 @@ class VerifyCitationResponse(BaseModel):
     processing_time_ms: int
 
 
+# ── Guard ──────────────────────────────────────────────────────────────
+
+
+class GuardResult(BaseModel):
+    safe: bool = False
+    verdict: str = "rejected"
+    action: str = "block"
+    reason: str | None = None
+    confidence: float = 0.0
+
+
 # ── Analytics & Insights ──────────────────────────────────────────────
 
 
