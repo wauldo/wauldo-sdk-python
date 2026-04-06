@@ -284,6 +284,24 @@ class AsyncHttpClient:
         from .conversation import Conversation as Conv
         return Conv(self, system=system, model=model)
 
+    async def get_insights_async(self) -> "InsightsResponse":
+        """GET /v1/insights"""
+        from .http_types import InsightsResponse
+        data = await self._request("GET", "/v1/insights")
+        return InsightsResponse.model_validate_json(data)
+
+    async def get_analytics_async(self, minutes: int = 60) -> "AnalyticsResponse":
+        """GET /v1/analytics"""
+        from .http_types import AnalyticsResponse
+        data = await self._request("GET", f"/v1/analytics?minutes={minutes}")
+        return AnalyticsResponse.model_validate_json(data)
+
+    async def get_analytics_traffic_async(self) -> "TrafficSummary":
+        """GET /v1/analytics/traffic"""
+        from .http_types import TrafficSummary
+        data = await self._request("GET", "/v1/analytics/traffic")
+        return TrafficSummary.model_validate_json(data)
+
     async def rag_ask(self, question: str, text: str, source: str = "document") -> str:
         """Upload text and query in one call. Returns answer string."""
         await self.rag_upload(content=text, filename=source)
