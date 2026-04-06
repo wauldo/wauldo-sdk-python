@@ -341,7 +341,8 @@ PRs welcome. Check the [good first issues](https://github.com/wauldo/wauldo-sdk-
 
 ## Contributors
 
-- [@qorexdev](https://github.com/qorexdev) — async client
+- [@qorexdev](https://github.com/qorexdev) — async client, streaming, MockHttpClient, quickstart, CONTRIBUTING guide
+- [@dagangtj](https://github.com/dagangtj) — analytics demo + MockHttpClient analytics methods
 
 ## License
 
