@@ -208,7 +208,6 @@ class MockHttpClient:
         timeout_ms: "int | None" = None,
     ) -> "UploadFileResponse":
         """Return mocked file upload response."""
-        import os
         from .http_types import UploadFileResponse
         return UploadFileResponse(
             document_id="mock-doc-file-001",
