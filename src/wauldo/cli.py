@@ -88,13 +88,7 @@ def cmd_upload(args: argparse.Namespace) -> None:
 
     ext = os.path.splitext(path)[1].lower()
     if ext in (".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg"):
-        if args.mock:
-            # mock doesn't have upload_file, use rag_upload fallback
-            with open(path, "r", errors="replace") as f:
-                content = f.read()
-            resp = client.rag_upload(content=content, filename=os.path.basename(path))
-        else:
-            resp = client.upload_file(file_path=path, title=args.title, tags=args.tags)
+        resp = client.upload_file(file_path=path, title=args.title, tags=args.tags)
     else:
         with open(path, "r", encoding="utf-8") as f:
             content = f.read()
