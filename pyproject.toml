@@ -43,6 +43,9 @@ dev = [
     "aiohttp>=3.9.0",
 ]
 
+[project.scripts]
+wauldo = "wauldo.cli:main"
+
 [project.urls]
 Homepage = "https://wauldo.com"
 Documentation = "https://wauldo.com/docs"
