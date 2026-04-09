@@ -103,6 +103,22 @@ Wauldo:       "Refunds are processed within 60 days"     ← verified
 
 ## Examples
 
+### Guard — catch hallucinations (2 lines)
+
+```python
+result = client.guard(
+    text="Returns are accepted within 60 days of purchase",
+    source_context="Our return policy allows returns within 14 days.",
+)
+print(result.verdict)            # "rejected"
+print(result.action)             # "block"
+print(result.claims[0].reason)   # "numerical_mismatch"
+print(result.is_blocked)         # True
+print(result.hallucination_rate) # 1.0
+```
+
+Guard verifies any LLM output against source documents. Wrong answers get blocked before they reach your users. 3 modes: `lexical` (<1ms), `hybrid` (~50ms), `semantic` (~500ms).
+
 ### Upload a PDF and ask questions
 
 ```python
@@ -253,6 +269,32 @@ All sync methods have async equivalents. *Contributed by [@qorexdev](https://git
 
 ---
 
+## CLI
+
+*Contributed by [@qorexdev](https://github.com/qorexdev).*
+
+```bash
+# Set your API key
+export WAULDO_API_KEY=your_key
+
+# Upload a document
+wauldo upload --content "Our return policy allows returns within 14 days."
+
+# Query
+wauldo query "What is the return policy?"
+
+# Guard — fact-check a claim
+wauldo fact-check --text "Returns accepted within 60 days" --source "Returns within 14 days."
+
+# Verify citations
+wauldo verify --text "The policy covers damage [Source: Manual]."
+
+# Offline mode (no server)
+wauldo query "test" --mock
+```
+
+---
+
 ## Features
 
 - **Pre-generation fact extraction** — numbers, dates, limits injected as constraints before the LLM call
@@ -265,6 +307,7 @@ All sync methods have async equivalents. *Contributed by [@qorexdev](https://git
 - **Smart model routing** — auto-selects cheapest model that meets quality
 - **OpenAI-compatible** — swap your `base_url`, keep your existing code
 - **Sync + Async** — full async/await support
+- **CLI** — `wauldo upload`, `wauldo query`, `wauldo fact-check` from terminal
 
 ---
 
