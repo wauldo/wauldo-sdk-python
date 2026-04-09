@@ -120,28 +120,6 @@ class RagUploadResponse(BaseModel):
     chunks_count: int
 
 
-class DocumentQuality(BaseModel):
-    """Quality assessment of uploaded document."""
-
-    score: float
-    label: str
-    word_count: int
-    line_density: float
-    avg_line_length: float
-    paragraph_count: int
-
-
-class UploadFileResponse(BaseModel):
-    """Response from POST /v1/upload-file (PDF, DOCX, text, image)."""
-
-    document_id: str
-    chunks_count: int
-    indexed_at: str
-    content_type: str
-    trace_id: str
-    quality: Optional[DocumentQuality] = None
-
-
 class RagSource(BaseModel):
     document_id: str
     content: str
@@ -192,29 +170,29 @@ class RagQueryResponse(BaseModel):
         return self.grounded
 
 
-# ── Orchestrator ─────────────────────────────────────────────────────────
+# ── Guard (Fact-Check) ──────────────────────────────────────────────────
 
 
-class OrchestratorResponse(BaseModel):
-    final_output: str
+class GuardClaim(BaseModel):
+    """A single verified claim from the Guard response."""
 
-
-# ── Fact-Check ──────────────────────────────────────────────────────────
-
-
-class ClaimResult(BaseModel):
     text: str
-    claim_type: str
+    claim_type: Optional[str] = None
     supported: bool
     confidence: float
-    confidence_label: str
+    confidence_label: Optional[str] = None
     verdict: str
     action: str
     reason: Optional[str] = None
     evidence: Optional[str] = None
 
 
-class FactCheckResponse(BaseModel):
+class GuardResponse(BaseModel):
+    """Response from POST /v1/fact-check — the Guard verification API.
+
+    Use ``is_safe`` to quickly check if the content passed verification.
+    """
+
     verdict: str
     action: str
     hallucination_rate: float
@@ -222,111 +200,23 @@ class FactCheckResponse(BaseModel):
     total_claims: int
     supported_claims: int
     confidence: float
-    claims: list[ClaimResult]
+    claims: List[GuardClaim]
     mode_warning: Optional[str] = None
-    processing_time_ms: int
+    processing_time_ms: Optional[int] = None
+
+    @property
+    def is_safe(self) -> bool:
+        """True if the verdict allows the content through."""
+        return self.verdict == "verified"
+
+    @property
+    def is_blocked(self) -> bool:
+        """True if the content should be blocked."""
+        return self.action == "block"
 
 
-# ── Citation Verify ────────────────────────────────────────────────────
+# ── Orchestrator ─────────────────────────────────────────────────────────
 
 
-class SourceChunk(BaseModel):
-    name: str
-    content: str
-
-
-class CitationDetail(BaseModel):
-    citation: str
-    source_name: str
-    is_valid: bool
-
-
-class VerifyCitationRequest(BaseModel):
-    text: str
-    sources: Optional[list[SourceChunk]] = None
-    threshold: Optional[float] = None
-
-
-class VerifyCitationResponse(BaseModel):
-    citation_ratio: float
-    has_sufficient_citations: bool
-    sentence_count: int
-    citation_count: int
-    uncited_sentences: list[str]
-    citations: Optional[list[CitationDetail]] = None
-    phantom_count: Optional[int] = None
-    processing_time_ms: int
-
-
-# ── Guard ──────────────────────────────────────────────────────────────
-
-
-class GuardResult(BaseModel):
-    safe: bool = False
-    verdict: str = "rejected"
-    action: str = "block"
-    reason: str | None = None
-    confidence: float = 0.0
-
-
-# ── Analytics & Insights ──────────────────────────────────────────────
-
-
-class TokenStats(BaseModel):
-    baseline_total: int = 0
-    real_total: int = 0
-    saved_total: int = 0
-    saved_percent_avg: float = 0.0
-    saved_percent_min: Optional[float] = None
-    saved_percent_max: Optional[float] = None
-
-
-class CostStats(BaseModel):
-    estimated_usd_saved: float = 0.0
-
-
-class InsightsResponse(BaseModel):
-    tig_key: str = ""
-    total_requests: int = 0
-    intelligence_requests: int = 0
-    fallback_requests: int = 0
-    tokens: TokenStats = TokenStats()
-    cost: CostStats = CostStats()
-
-
-class CacheMetrics(BaseModel):
-    total_requests: int = 0
-    cache_hit_rate: float = 0.0
-    avg_latency_ms: float = 0.0
-    p95_latency_ms: float = 0.0
-
-
-class TokenSavings(BaseModel):
-    total_baseline: int = 0
-    total_real: int = 0
-    total_saved: int = 0
-    avg_savings_percent: float = 0.0
-
-
-class AnalyticsResponse(BaseModel):
-    cache: CacheMetrics = CacheMetrics()
-    tokens: TokenSavings = TokenSavings()
-    uptime_secs: int = 0
-
-
-class TenantTraffic(BaseModel):
-    tenant_id: str = ""
-    requests_today: int = 0
-    tokens_used: int = 0
-    success_rate: float = 0.0
-    avg_latency_ms: int = 0
-
-
-class TrafficSummary(BaseModel):
-    total_requests_today: int = 0
-    total_tokens_today: int = 0
-    top_tenants: list[TenantTraffic] = []
-    error_rate: float = 0.0
-    avg_latency_ms: int = 0
-    p95_latency_ms: int = 0
-    uptime_secs: int = 0
+class OrchestratorResponse(BaseModel):
+    final_output: str

@@ -245,3 +245,128 @@ def test_models_list(mock_urlopen: MagicMock) -> None:
     assert len(models.data) == 2
     assert models.data[0].id == "qwen2.5:7b"
     assert models.data[1].id == "llama3:8b"
+
+
+# ---------------------------------------------------------------------------
+# Guard (fact-check) tests
+# ---------------------------------------------------------------------------
+
+_GUARD_REJECTED = {
+    "verdict": "rejected",
+    "action": "block",
+    "hallucination_rate": 1.0,
+    "mode": "lexical",
+    "total_claims": 1,
+    "supported_claims": 0,
+    "confidence": 0.0,
+    "claims": [
+        {
+            "text": "Returns are accepted within 60 days of purchase",
+            "claim_type": "Fact",
+            "supported": False,
+            "confidence": 0.3,
+            "confidence_label": "very_low",
+            "verdict": "rejected",
+            "action": "block",
+            "reason": "numerical_mismatch",
+            "evidence": "Our return policy allows returns within 14 days of purchase.",
+        }
+    ],
+    "processing_time_ms": 0,
+}
+
+_GUARD_VERIFIED = {
+    "verdict": "verified",
+    "action": "allow",
+    "hallucination_rate": 0.0,
+    "mode": "lexical",
+    "total_claims": 1,
+    "supported_claims": 1,
+    "confidence": 0.85,
+    "claims": [
+        {
+            "text": "Rust was released in 2010",
+            "claim_type": "Fact",
+            "supported": True,
+            "confidence": 0.85,
+            "confidence_label": "high",
+            "verdict": "verified",
+            "action": "allow",
+            "reason": None,
+            "evidence": "Rust was released in 2010 by Mozilla Research.",
+        }
+    ],
+    "processing_time_ms": 0,
+}
+
+
+@patch("wauldo.http_transport.urlopen")
+def test_guard_catches_numerical_mismatch(mock_urlopen: MagicMock) -> None:
+    """Guard blocks '60 days' when source says '14 days'."""
+    mock_urlopen.return_value = _mock_urlopen_response(_GUARD_REJECTED)
+    client = HttpClient(base_url="http://fake:3000", max_retries=1)
+
+    result = client.guard(
+        text="Returns are accepted within 60 days of purchase",
+        source_context="Our return policy allows returns within 14 days of purchase.",
+    )
+
+    assert result.verdict == "rejected"
+    assert result.action == "block"
+    assert result.is_blocked is True
+    assert result.is_safe is False
+    assert result.hallucination_rate == 1.0
+    assert result.total_claims == 1
+    assert result.supported_claims == 0
+    assert result.claims[0].reason == "numerical_mismatch"
+    assert result.claims[0].supported is False
+
+
+@patch("wauldo.http_transport.urlopen")
+def test_guard_verifies_correct_claim(mock_urlopen: MagicMock) -> None:
+    """Guard passes through correct claims."""
+    mock_urlopen.return_value = _mock_urlopen_response(_GUARD_VERIFIED)
+    client = HttpClient(base_url="http://fake:3000", max_retries=1)
+
+    result = client.guard(
+        text="Rust was released in 2010",
+        source_context="Rust was released in 2010 by Mozilla Research.",
+    )
+
+    assert result.verdict == "verified"
+    assert result.action == "allow"
+    assert result.is_safe is True
+    assert result.is_blocked is False
+    assert result.hallucination_rate == 0.0
+    assert result.confidence == 0.85
+    assert result.claims[0].supported is True
+
+
+def test_guard_rejects_empty_text() -> None:
+    """Guard raises ValidationError on empty text."""
+    client = HttpClient(base_url="http://fake:3000", max_retries=1)
+    with pytest.raises(Exception, match="empty"):
+        client.guard(text="", source_context="some context")
+
+
+def test_guard_rejects_empty_context() -> None:
+    """Guard raises ValidationError on empty source_context."""
+    client = HttpClient(base_url="http://fake:3000", max_retries=1)
+    with pytest.raises(Exception, match="empty"):
+        client.guard(text="some claim", source_context="")
+
+
+@patch("wauldo.http_transport.urlopen")
+def test_guard_mode_parameter(mock_urlopen: MagicMock) -> None:
+    """Guard sends the correct mode parameter."""
+    mock_urlopen.return_value = _mock_urlopen_response(_GUARD_VERIFIED)
+    client = HttpClient(base_url="http://fake:3000", max_retries=1)
+
+    client.guard(text="claim", source_context="ctx", mode="hybrid")
+
+    call_args = mock_urlopen.call_args
+    request_obj = call_args[0][0]
+    sent_body = json.loads(request_obj.data.decode())
+    assert sent_body["mode"] == "hybrid"
+    assert sent_body["text"] == "claim"
+    assert sent_body["source_context"] == "ctx"

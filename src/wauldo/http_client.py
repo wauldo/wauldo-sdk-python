@@ -14,12 +14,11 @@ from .http_types import (
     ChatRequest,
     ChatResponse,
     EmbeddingResponse,
-    FactCheckResponse,
+    GuardResponse,
     ModelList,
     OrchestratorResponse,
     RagQueryResponse,
     RagUploadResponse,
-    UploadFileResponse,
 )
 
 if TYPE_CHECKING:
@@ -74,35 +73,6 @@ class HttpClient:
         url = f"{self.base_url}{path}"
         data = json.dumps(body).encode() if body else None
         return self._transport.execute(method, url, data=data, timeout_ms=timeout_ms)
-
-    def _request_multipart(
-        self, method: str, path: str, files: dict, form_data: dict, timeout_ms: Optional[int] = None,
-    ) -> bytes:
-        """Send multipart/form-data request (for file uploads)."""
-        import io
-        boundary = "----WauldoSDKBoundary"
-        body_parts: list[bytes] = []
-        for key, (filename, fileobj) in files.items():
-            body_parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{key}\"; filename=\"{filename}\"\r\nContent-Type: application/octet-stream\r\n\r\n".encode())
-            body_parts.append(fileobj.read() if hasattr(fileobj, "read") else fileobj)
-            body_parts.append(b"\r\n")
-        for key, value in form_data.items():
-            body_parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{key}\"\r\n\r\n{value}\r\n".encode())
-        body_parts.append(f"--{boundary}--\r\n".encode())
-        data = b"".join(body_parts)
-
-        url = f"{self.base_url}{path}"
-        # Override Content-Type for multipart
-        old_headers_fn = self._transport._headers_fn
-        def multipart_headers() -> dict[str, str]:
-            h = old_headers_fn()
-            h["Content-Type"] = f"multipart/form-data; boundary={boundary}"
-            return h
-        self._transport._headers_fn = multipart_headers
-        try:
-            return self._transport.execute(method, url, data=data, timeout_ms=timeout_ms)
-        finally:
-            self._transport._headers_fn = old_headers_fn
 
     # ── OpenAI-compatible endpoints ──────────────────────────────────────
 
@@ -198,40 +168,6 @@ class HttpClient:
         data = self._request("POST", "/v1/upload", body, timeout_ms=timeout_ms)
         return RagUploadResponse.model_validate_json(data)
 
-    def upload_file(
-        self,
-        file_path: str,
-        title: Optional[str] = None,
-        tags: Optional[str] = None,
-        timeout_ms: Optional[int] = None,
-    ) -> UploadFileResponse:
-        """POST /v1/upload-file -- Upload a file (PDF, DOCX, text, image) for RAG indexing.
-
-        Args:
-            file_path: Path to the file to upload (PDF, DOCX, TXT, etc.).
-            title: Optional document title.
-            tags: Optional comma-separated tags.
-            timeout_ms: Per-request timeout in milliseconds.
-
-        Returns:
-            ``UploadFileResponse`` with document_id, chunks_count, quality scoring.
-        """
-        import os
-        if not os.path.isfile(file_path):
-            raise ValidationError(f"File not found: {file_path}", field="file_path")
-        if os.path.getsize(file_path) > self._MAX_UPLOAD_SIZE:
-            raise ValidationError("File exceeds 10 MB limit", field="file_path")
-
-        files = {"file": (os.path.basename(file_path), open(file_path, "rb"))}
-        form_data: dict[str, str] = {}
-        if title:
-            form_data["title"] = title
-        if tags:
-            form_data["tags"] = tags
-
-        data = self._request_multipart("POST", "/v1/upload-file", files, form_data, timeout_ms)
-        return UploadFileResponse.model_validate_json(data)
-
     def rag_query(
         self,
         query: str,
@@ -276,102 +212,52 @@ class HttpClient:
         data = self._request("POST", "/v1/orchestrator/parallel", {"prompt": prompt})
         return OrchestratorResponse.model_validate_json(data)
 
-    # ── Fact-Check endpoints ────────────────────────────────────────────
-
-    def fact_check(
-        self,
-        text: str,
-        source_context: str,
-        mode: str = "lexical",
-    ) -> FactCheckResponse:
-        """POST /v1/fact-check -- Verify claims against source context.
-
-        Args:
-            text: Text containing claims to verify.
-            source_context: Source document to verify against.
-            mode: Verification mode (lexical, hybrid, semantic).
-
-        Returns:
-            FactCheckResponse with verdict, action, and per-claim results.
-        """
-        body: dict = {"text": text, "source_context": source_context, "mode": mode}
-        data = self._request("POST", "/v1/fact-check", body)
-        return FactCheckResponse.model_validate_json(data)
-
-    def verify_citation(
-        self,
-        text: str,
-        sources: "list[dict] | None" = None,
-        threshold: "float | None" = None,
-    ) -> "VerifyCitationResponse":
-        """POST /v1/verify -- Verify citations in AI-generated text.
-
-        Args:
-            text: AI-generated text with or without citations.
-            sources: Optional source chunks [{"name": "...", "content": "..."}].
-            threshold: Minimum citation ratio (0.0-1.0, default 0.5).
-
-        Returns:
-            VerifyCitationResponse with citation_ratio, uncited_sentences, phantom detection.
-        """
-        from .http_types import VerifyCitationResponse
-
-        body: dict = {"text": text}
-        if sources is not None:
-            body["sources"] = sources
-        if threshold is not None:
-            body["threshold"] = threshold
-        data = self._request("POST", "/v1/verify", body)
-        return VerifyCitationResponse.model_validate_json(data)
-
-    # ── Analytics & Insights endpoints ──────────────────────────────────
-
-    def get_insights(self) -> "InsightsResponse":
-        """GET /v1/insights -- ROI metrics for your API key."""
-        from .http_types import InsightsResponse
-        data = self._request("GET", "/v1/insights")
-        return InsightsResponse.model_validate_json(data)
-
-    def get_analytics(self, minutes: int = 60) -> "AnalyticsResponse":
-        """GET /v1/analytics -- Usage analytics and cache performance."""
-        from .http_types import AnalyticsResponse
-        data = self._request("GET", f"/v1/analytics?minutes={minutes}")
-        return AnalyticsResponse.model_validate_json(data)
-
-    def get_analytics_traffic(self) -> "TrafficSummary":
-        """GET /v1/analytics/traffic -- Per-tenant traffic monitoring."""
-        from .http_types import TrafficSummary
-        data = self._request("GET", "/v1/analytics/traffic")
-        return TrafficSummary.model_validate_json(data)
+    # ── Guard (Fact-Check) ───────────────────────────────────────────────
 
     def guard(
         self,
         text: str,
-        source: str,
+        source_context: str,
         mode: str = "lexical",
-    ) -> "GuardResult":
-        """Verify an LLM output against a source document.
+        timeout_ms: Optional[int] = None,
+    ) -> GuardResponse:
+        """POST /v1/fact-check -- Verify text claims against source context.
 
-        Convenience wrapper around fact_check(). Returns a simple
-        safe/unsafe result for use as a hallucination firewall.
+        Guard is a hallucination firewall: it checks whether an LLM's output
+        is supported by the source documents. If claims don't match, Guard
+        blocks the response before it reaches users.
 
         Args:
             text: The LLM-generated text to verify.
-            source: The source document to verify against.
-            mode: Verification mode — "lexical" (fast), "hybrid", or "semantic".
+            source_context: The ground-truth source document(s).
+            mode: Verification mode — "lexical" (<1ms, token overlap),
+                "hybrid" (~50ms, token + BGE embeddings), or
+                "semantic" (~500ms, embeddings only).
+            timeout_ms: Per-request timeout in milliseconds.
 
         Returns:
-            GuardResult with safe, verdict, action, reason, confidence.
+            ``GuardResponse`` with verdict, action, claims, and confidence.
+
+        Example::
+
+            result = client.guard(
+                text="Returns accepted within 60 days",
+                source_context="Our return policy: 14 days.",
+            )
+            if result.is_blocked:
+                print(f"Blocked: {result.claims[0].reason}")
         """
-        from .http_types import GuardResult
-        result = self.fact_check(text=text, source_context=source, mode=mode)
-        return GuardResult(
-            safe=result.claims[0].verdict == "verified" if result.claims else False,
-            verdict=result.claims[0].verdict if result.claims else "rejected",
-            action=result.claims[0].action if result.claims else "block",
-            reason=result.claims[0].reason if result.claims else "no_claims",
-            confidence=result.claims[0].confidence if result.claims else 0.0,
-        )
+        if not text.strip():
+            raise ValidationError("text cannot be empty", field="text")
+        if not source_context.strip():
+            raise ValidationError("source_context cannot be empty", field="source_context")
+        body: dict[str, Any] = {
+            "text": text,
+            "source_context": source_context,
+            "mode": mode,
+        }
+        data = self._request("POST", "/v1/fact-check", body, timeout_ms=timeout_ms)
+        return GuardResponse.model_validate_json(data)
 
     # ── Convenience helpers ──────────────────────────────────────────────
 

@@ -149,15 +149,45 @@ class MockHttpClient:
         result = self.rag_query(question)
         return result.answer
 
-    def guard(self, text: str, source: str, mode: str = "lexical") -> "GuardResult":
-        """Return mocked guard result."""
-        from .http_types import GuardResult
-        return GuardResult(
-            safe=True,
+    def guard(
+        self,
+        text: str,
+        source_context: str,
+        mode: str = "lexical",
+        timeout_ms: Optional[int] = None,
+    ) -> "GuardResponse":
+        """Return mocked guard result.
+
+        Args:
+            text: The LLM-generated text to verify.
+            source_context: The ground-truth source document(s).
+            mode: Verification mode (ignored in mock).
+            timeout_ms: Ignored in mock.
+
+        Returns:
+            A ``GuardResponse`` with verdict "verified" and confidence 0.95.
+        """
+        from .http_types import GuardClaim, GuardResponse
+        return GuardResponse(
             verdict="verified",
             action="allow",
-            reason=None,
+            hallucination_rate=0.0,
+            mode=mode,
+            total_claims=1,
+            supported_claims=1,
             confidence=0.95,
+            claims=[GuardClaim(
+                text=text,
+                claim_type="Fact",
+                supported=True,
+                confidence=0.95,
+                confidence_label="high",
+                verdict="verified",
+                action="allow",
+                reason=None,
+                evidence=source_context,
+            )],
+            processing_time_ms=0,
         )
 
     # ── Analytics & Insights ────────────────────────────────────────────

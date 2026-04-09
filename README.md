@@ -259,7 +259,7 @@ All sync methods have async equivalents. *Contributed by [@qorexdev](https://git
 - **Post-generation grounding check** — every answer verified against sources
 - **Citation validation** — detects phantom references
 - **Analytics & Insights** — track token savings, cache performance, cost per hour, and per-tenant traffic
-- **Guard method** — one-call hallucination firewall (`client.guard(text, source)` → safe/unsafe)
+- **Guard method** — hallucination firewall: `client.guard(text, source_context)` → verdict, action, claims with confidence scoring
 - **Fact-check API** — verify any claim against any source (3 modes: lexical, hybrid, semantic)
 - **Native PDF/DOCX upload** — server-side extraction with quality scoring
 - **Smart model routing** — auto-selects cheapest model that meets quality

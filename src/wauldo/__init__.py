@@ -16,32 +16,22 @@ from .exceptions import (
     ValidationError,
     WauldoError,
 )
-from .async_client import AsyncHttpClient
 from .http_client import HttpClient
 from .http_types import (
     ChatMessage as HttpChatMessage,
 )
 from .http_types import (
-    AnalyticsResponse,
     ChatRequest,
     ChatResponse,
-    CitationDetail,
-    ClaimResult,
     EmbeddingResponse,
-    FactCheckResponse,
-    GuardResult,
-    InsightsResponse,
-    SourceChunk,
-    TrafficSummary,
-    VerifyCitationResponse,
+    GuardClaim,
+    GuardResponse,
     ModelList,
     OrchestratorResponse,
     RagAuditInfo,
     RagQueryResponse,
     RagSource,
     RagUploadResponse,
-    UploadFileResponse,
-    DocumentQuality,
 )
 from .mock_client import MockHttpClient
 from .models import (
@@ -65,7 +55,6 @@ __all__ = [
     "AgentClient",
     "AsyncAgentClient",
     # HTTP Client
-    "AsyncHttpClient",
     "HttpClient",
     "MockHttpClient",
     "Conversation",
@@ -79,17 +68,9 @@ __all__ = [
     "RagQueryResponse",
     "RagSource",
     "RagUploadResponse",
-    "UploadFileResponse",
-    "DocumentQuality",
-    "ClaimResult",
-    "FactCheckResponse",
-    "GuardResult",
-    "CitationDetail",
-    "SourceChunk",
-    "VerifyCitationResponse",
-    "AnalyticsResponse",
-    "InsightsResponse",
-    "TrafficSummary",
+    # Guard
+    "GuardResponse",
+    "GuardClaim",
     # Exceptions
     "WauldoError",
     "AgentConnectionError",

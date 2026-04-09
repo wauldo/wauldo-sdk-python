@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "wauldo"
-version = "0.7.0"
+version = "0.8.0"
 description = "Official Python SDK for Wauldo — Verified AI answers from your documents"
 readme = "README.md"
 license = {text = "MIT"}
