@@ -1,30 +1,29 @@
-<h1 align="center">Wauldo Python SDK</h1>
+<div align="center">
 
-<p align="center">
-  <strong>Verified AI answers from your documents — or no answer at all.</strong>
-</p>
+<br />
 
-<p align="center">
-  Most RAG APIs guess. Wauldo verifies.
-</p>
+# 🐍 Wauldo Python SDK
 
-<p align="center">
-  <b>0% hallucination</b> &nbsp;|&nbsp; 83% accuracy &nbsp;|&nbsp; 61 eval tasks &nbsp;|&nbsp; 14 LLMs tested
-</p>
+### Verified RAG for Python — trust score on every answer
 
-<p align="center">
-  <a href="https://pypi.org/project/wauldo/"><img src="https://img.shields.io/pypi/v/wauldo.svg" alt="PyPI" /></a>&nbsp;
-  <a href="https://pypi.org/project/wauldo/"><img src="https://img.shields.io/pypi/dm/wauldo.svg" alt="Downloads" /></a>&nbsp;
-  <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python" />&nbsp;
-  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT" />
-</p>
+<br />
 
-<p align="center">
-  <a href="https://wauldo.com/demo">Demo</a> &bull;
-  <a href="https://wauldo.com/docs">Docs</a> &bull;
-  <a href="https://rapidapi.com/binnewzzin/api/smart-rag-api">Free API Key</a> &bull;
-  <a href="https://dev.to/wauldo/how-we-achieved-0-hallucination-rate-in-our-rag-api-with-benchmarks-4g54">Benchmarks</a>
-</p>
+**Your LLM passes demos.**
+**It fails in production.**
+
+One import, two lines — plug Wauldo Guard on top of LangChain / LlamaIndex / Haystack and get a numeric trust_score + verdict (`SAFE` / `CONFLICT` / `UNVERIFIED` / `BLOCK`) on every response.
+
+<br />
+
+[![PyPI](https://img.shields.io/pypi/v/wauldo.svg?style=for-the-badge&label=pypi&color=3776ab)](https://pypi.org/project/wauldo/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
+[![Leaderboard](https://img.shields.io/badge/📊_96%25_adversarial-wauldo.com%2Fleaderboard-3b82f6?style=for-the-badge)](https://wauldo.com/leaderboard)
+
+<br />
+
+<sub>Python 3.9+ · MIT · wraps any RAG pipeline · reproducible bench: [wauldo-leaderboard](https://github.com/wauldo/wauldo-leaderboard)</sub>
+
+</div>
 
 ---
 
@@ -383,11 +382,32 @@ Still stuck? [Open an issue](https://github.com/wauldo/wauldo-sdk-python/issues/
 
 PRs welcome. Check the [good first issues](https://github.com/wauldo/wauldo-sdk-python/labels/good%20first%20issue).
 
-## Contributors
+### Contributors
 
 - [@qorexdev](https://github.com/qorexdev) — async client, streaming, MockHttpClient, quickstart, CONTRIBUTING guide
 - [@dagangtj](https://github.com/dagangtj) — analytics demo + MockHttpClient analytics methods
 
-## License
+---
 
-MIT — see [LICENSE](./LICENSE)
+## 🔗 Related
+
+- **[wauldo.com](https://wauldo.com)** — platform
+- **[wauldo.com/leaderboard](https://wauldo.com/leaderboard)** — live RAG framework bench (6 frameworks, daily refresh)
+- **[wauldo.com/guard](https://wauldo.com/guard)** — verification layer docs
+- **[github.com/wauldo/wauldo-leaderboard](https://github.com/wauldo/wauldo-leaderboard)** — reproducible bench runner, MIT
+- **[github.com/wauldo/wauldo-sdk-js](https://github.com/wauldo/wauldo-sdk-js)** — TypeScript peer SDK
+- **[github.com/wauldo/wauldo-sdk-rust](https://github.com/wauldo/wauldo-sdk-rust)** — Rust peer SDK
+
+---
+
+## 📄 License
+
+MIT — see [LICENSE](./LICENSE).
+
+<div align="center">
+
+<br />
+
+<sub>Built by the Wauldo team. If this changed your mind about your RAG stack, give it a ⭐.</sub>
+
+</div>
