@@ -120,6 +120,10 @@ class MockHttpClient:
         """Return a mocked upload response."""
         return RagUploadResponse(document_id="mock-doc-001", chunks_count=3)
 
+    def upload_file(self, file_path: str, title: Optional[str] = None, tags: Optional[str] = None, timeout_ms: Optional[int] = None) -> RagUploadResponse:
+        """Return a mocked file upload response."""
+        return RagUploadResponse(document_id="mock-doc-001", chunks_count=3)
+
     def rag_query(
         self, query: str, top_k: int = 5, timeout_ms: Optional[int] = None,
         debug: bool = False, quality_mode: Optional[str] = None,
