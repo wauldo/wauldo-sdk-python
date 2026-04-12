@@ -50,7 +50,6 @@ def _output(data: dict, args: argparse.Namespace) -> None:
             print(json.dumps(data, ensure_ascii=False))
         return
 
-    # pretty output
     for key, val in data.items():
         if key == "_header":
             print(val)
@@ -152,7 +151,7 @@ def cmd_query(args: argparse.Namespace) -> None:
     print(" | ".join(footer_parts))
 
 
-def cmd_fact_check(args: argparse.Namespace) -> None:
+def cmd_guard(args: argparse.Namespace) -> None:
     client = _get_client(args)
 
     source_text = args.source
@@ -165,7 +164,7 @@ def cmd_fact_check(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     t0 = time.time()
-    resp = client.fact_check(text=args.claim, source_context=source_text, mode=args.mode)
+    resp = client.guard(text=args.claim, source_context=source_text, mode=args.mode)
     elapsed = time.time() - t0
 
     if getattr(args, "json", False):
@@ -194,52 +193,6 @@ def cmd_fact_check(args: argparse.Namespace) -> None:
     print(f"Mode: {resp.mode} | Confidence: {resp.confidence:.2f} | Latency: {elapsed:.1f}s")
 
 
-def cmd_verify(args: argparse.Namespace) -> None:
-    client = _get_client(args)
-
-    sources = None
-    if args.sources:
-        sources = []
-        for s in args.sources:
-            if os.path.isfile(s):
-                with open(s, "r", encoding="utf-8") as f:
-                    sources.append({"name": os.path.basename(s), "content": f.read()})
-            else:
-                sources.append({"name": f"source_{len(sources)+1}", "content": s})
-
-    t0 = time.time()
-    resp = client.verify_citation(
-        text=args.text,
-        sources=sources if sources else None,
-        threshold=args.threshold,
-    )
-    elapsed = time.time() - t0
-
-    if getattr(args, "json", False):
-        d = resp.model_dump()
-        d["latency_s"] = round(elapsed, 2)
-        print(json.dumps(d, indent=2, ensure_ascii=False))
-        return
-
-    if getattr(args, "raw", False):
-        print(f"{resp.citation_ratio:.2f}")
-        return
-
-    icon = "\u2713" if resp.has_sufficient_citations else "\u2717"
-    print(f"{icon} Citation ratio: {resp.citation_ratio:.0%} ({resp.citation_count}/{resp.sentence_count} sentences)")
-
-    if resp.uncited_sentences:
-        print()
-        print("Uncited:")
-        for s in resp.uncited_sentences[:5]:
-            print(f"  - {s[:100]}")
-
-    if resp.phantom_count and resp.phantom_count > 0:
-        print(f"\n  \u26a0 {resp.phantom_count} phantom citation(s) detected")
-
-    print(f"\nLatency: {elapsed:.1f}s")
-
-
 def main(argv: Optional[list[str]] = None) -> None:
     parser = argparse.ArgumentParser(
         prog="wauldo",
@@ -248,7 +201,7 @@ def main(argv: Optional[list[str]] = None) -> None:
     parser.add_argument("--mock", action="store_true", help="use mock client (no API key needed)")
     parser.add_argument("--json", action="store_true", help="JSON output")
     parser.add_argument("--raw", action="store_true", help="raw output (just the answer)")
-    parser.add_argument("--version", action="version", version="%(prog)s 0.7.0")
+    parser.add_argument("--version", action="version", version="%(prog)s 0.8.0")
 
     sub = parser.add_subparsers(dest="command")
 
@@ -263,17 +216,11 @@ def main(argv: Optional[list[str]] = None) -> None:
     p_query.add_argument("question", help="your question")
     p_query.add_argument("--top-k", type=int, default=5, help="number of sources (default: 5)")
 
-    # fact-check
-    p_fc = sub.add_parser("fact-check", help="verify claims against source text")
+    # guard (fact-check)
+    p_fc = sub.add_parser("guard", help="verify claims against source text")
     p_fc.add_argument("claim", help="text containing claims to verify")
     p_fc.add_argument("--source", required=True, help="source text or file path to verify against")
     p_fc.add_argument("--mode", default="lexical", choices=["lexical", "hybrid", "semantic"])
-
-    # verify
-    p_verify = sub.add_parser("verify", help="check citation coverage in AI-generated text")
-    p_verify.add_argument("text", help="AI-generated text to verify")
-    p_verify.add_argument("--sources", nargs="+", help="source files or inline text")
-    p_verify.add_argument("--threshold", type=float, help="min citation ratio (0.0-1.0)")
 
     args = parser.parse_args(argv)
 
@@ -284,8 +231,7 @@ def main(argv: Optional[list[str]] = None) -> None:
     commands = {
         "upload": cmd_upload,
         "query": cmd_query,
-        "fact-check": cmd_fact_check,
-        "verify": cmd_verify,
+        "guard": cmd_guard,
     }
     commands[args.command](args)
 

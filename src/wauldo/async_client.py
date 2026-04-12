@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import AsyncIterator
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, List, Optional, Union
 
 from .async_transport import AsyncHttpTransport
 from .exceptions import ValidationError
@@ -40,9 +40,9 @@ class AsyncHttpClient:
         max_retries: int = 3,
         retry_backoff: float = 1.0,
         headers: Optional[dict[str, str]] = None,
-        on_request: Optional[Callable[[str, str], None]] = None,
-        on_response: Optional[Callable[[int, float], None]] = None,
-        on_error: Optional[Callable[[Exception], None]] = None,
+        on_request: Optional[Any] = None,
+        on_response: Optional[Any] = None,
+        on_error: Optional[Any] = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
@@ -75,25 +75,30 @@ class AsyncHttpClient:
     async def _request_multipart(
         self, method: str, path: str, files: dict, form_data: dict, timeout_ms: Optional[int] = None,
     ) -> bytes:
-        import aiohttp
-
         boundary = "----WauldoSDKBoundary"
         body_parts: list[bytes] = []
         for key, (filename, fileobj) in files.items():
-            body_parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{key}\"; filename=\"{filename}\"\r\nContent-Type: application/octet-stream\r\n\r\n".encode())
+            body_parts.append(
+                f'--{boundary}\r\nContent-Disposition: form-data; name="{key}"; '
+                f'filename="{filename}"\r\nContent-Type: application/octet-stream\r\n\r\n'.encode()
+            )
             body_parts.append(fileobj.read() if hasattr(fileobj, "read") else fileobj)
             body_parts.append(b"\r\n")
         for key, value in form_data.items():
-            body_parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{key}\"\r\n\r\n{value}\r\n".encode())
+            body_parts.append(
+                f'--{boundary}\r\nContent-Disposition: form-data; name="{key}"\r\n\r\n{value}\r\n'.encode()
+            )
         body_parts.append(f"--{boundary}--\r\n".encode())
         data = b"".join(body_parts)
 
         url = f"{self.base_url}{path}"
         old_headers_fn = self._transport._headers_fn
+
         def multipart_headers() -> dict[str, str]:
             h = old_headers_fn()
             h["Content-Type"] = f"multipart/form-data; boundary={boundary}"
             return h
+
         self._transport._headers_fn = multipart_headers
         try:
             return await self._transport.execute(method, url, data=data, timeout_ms=timeout_ms)
@@ -251,13 +256,13 @@ class AsyncHttpClient:
         data = await self._request("POST", "/v1/orchestrator/parallel", {"prompt": prompt})
         return OrchestratorResponse.model_validate_json(data)
 
-    async def fact_check(
+    async def guard(
         self,
         text: str,
         source_context: str,
         mode: str = "lexical",
     ) -> FactCheckResponse:
-        """POST /v1/fact-check"""
+        """POST /v1/fact-check — Guard hallucination firewall."""
         body: dict = {"text": text, "source_context": source_context, "mode": mode}
         data = await self._request("POST", "/v1/fact-check", body)
         return FactCheckResponse.model_validate_json(data)
@@ -268,7 +273,7 @@ class AsyncHttpClient:
         sources: "list[dict] | None" = None,
         threshold: "float | None" = None,
     ) -> VerifyCitationResponse:
-        """POST /v1/verify"""
+        """POST /v1/verify — citation validation."""
         body: dict = {"text": text}
         if sources is not None:
             body["sources"] = sources
@@ -281,22 +286,22 @@ class AsyncHttpClient:
         self, system: Optional[str] = None, model: str = "default",
     ):
         """Create a stateful Conversation bound to this async client."""
-        from .conversation import Conversation as Conv
-        return Conv(self, system=system, model=model)
+        from .conversation import Conversation
+        return Conversation(self, system=system, model=model)  # type: ignore[arg-type]
 
-    async def get_insights_async(self) -> "InsightsResponse":
+    async def get_insights(self) -> "InsightsResponse":
         """GET /v1/insights"""
         from .http_types import InsightsResponse
         data = await self._request("GET", "/v1/insights")
         return InsightsResponse.model_validate_json(data)
 
-    async def get_analytics_async(self, minutes: int = 60) -> "AnalyticsResponse":
+    async def get_analytics(self, minutes: int = 60) -> "AnalyticsResponse":
         """GET /v1/analytics"""
         from .http_types import AnalyticsResponse
         data = await self._request("GET", f"/v1/analytics?minutes={minutes}")
         return AnalyticsResponse.model_validate_json(data)
 
-    async def get_analytics_traffic_async(self) -> "TrafficSummary":
+    async def get_analytics_traffic(self) -> "TrafficSummary":
         """GET /v1/analytics/traffic"""
         from .http_types import TrafficSummary
         data = await self._request("GET", "/v1/analytics/traffic")

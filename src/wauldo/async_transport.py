@@ -1,3 +1,5 @@
+"""Async HTTP transport with retry and backoff for Wauldo SDK."""
+
 from __future__ import annotations
 
 import asyncio

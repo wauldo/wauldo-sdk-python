@@ -220,3 +220,121 @@ class GuardResponse(BaseModel):
 
 class OrchestratorResponse(BaseModel):
     final_output: str
+
+
+# ── Upload File ─────────────────────────────────────────────────────────
+
+
+class UploadFileResponse(BaseModel):
+    """Response from POST /v1/upload-file (multipart file upload)."""
+
+    document_id: str
+    chunks_count: int
+    quality_label: Optional[str] = None
+    quality_score: Optional[float] = None
+
+
+# ── Verify Citation ─────────────────────────────────────────────────────
+
+
+class CitationInfo(BaseModel):
+    """A single citation extracted from the text."""
+
+    marker: str
+    source_name: Optional[str] = None
+    is_valid: bool = False
+
+
+class VerifyCitationResponse(BaseModel):
+    """Response from POST /v1/verify — citation validation."""
+
+    citation_ratio: float
+    has_sufficient_citations: bool
+    uncited_sentences: List[str] = []
+    citations: List[CitationInfo] = []
+    phantom_count: int = 0
+
+
+# ── Fact-Check (alias) ──────────────────────────────────────────────────
+
+# async_client uses FactCheckResponse; it's the same shape as GuardResponse.
+FactCheckResponse = GuardResponse
+
+
+# ── Analytics & Insights ────────────────────────────────────────────────
+
+
+class TokenStats(BaseModel):
+    """Token usage breakdown for InsightsResponse."""
+
+    baseline_total: int
+    real_total: int
+    saved_total: int
+    saved_percent_avg: float
+    saved_percent_min: float = 0.0
+    saved_percent_max: float = 0.0
+
+
+class CostStats(BaseModel):
+    """Cost savings for InsightsResponse."""
+
+    estimated_usd_saved: float
+
+
+class InsightsResponse(BaseModel):
+    """Response from GET /v1/insights — ROI summary."""
+
+    tig_key: Optional[str] = None
+    total_requests: int = 0
+    intelligence_requests: int = 0
+    fallback_requests: int = 0
+    tokens: Optional[TokenStats] = None
+    cost: Optional[CostStats] = None
+
+
+class CacheMetrics(BaseModel):
+    """Cache performance in AnalyticsResponse."""
+
+    total_requests: int = 0
+    cache_hit_rate: float = 0.0
+    avg_latency_ms: float = 0.0
+    p95_latency_ms: float = 0.0
+
+
+class TokenSavings(BaseModel):
+    """Token savings summary in AnalyticsResponse."""
+
+    total_baseline: int = 0
+    total_real: int = 0
+    total_saved: int = 0
+    avg_savings_percent: float = 0.0
+
+
+class AnalyticsResponse(BaseModel):
+    """Response from GET /v1/analytics — usage + cache metrics."""
+
+    cache: Optional[CacheMetrics] = None
+    tokens: Optional[TokenSavings] = None
+    uptime_secs: int = 0
+
+
+class TenantTraffic(BaseModel):
+    """Per-tenant traffic entry in TrafficSummary."""
+
+    tenant_id: str
+    requests_today: int = 0
+    tokens_used: int = 0
+    success_rate: float = 0.0
+    avg_latency_ms: float = 0.0
+
+
+class TrafficSummary(BaseModel):
+    """Response from GET /v1/analytics/traffic — per-tenant monitoring."""
+
+    total_requests_today: int = 0
+    total_tokens_today: int = 0
+    top_tenants: List[TenantTraffic] = []
+    error_rate: float = 0.0
+    avg_latency_ms: float = 0.0
+    p95_latency_ms: float = 0.0
+    uptime_secs: int = 0
