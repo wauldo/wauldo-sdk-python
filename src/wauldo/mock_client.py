@@ -156,18 +156,48 @@ class MockHttpClient:
         mode: str = "lexical",
         timeout_ms: Optional[int] = None,
     ) -> "GuardResponse":
-        """Return mocked guard result.
+        """Return mocked guard result with basic lexical verification.
+
+        Uses simple number extraction to detect numerical mismatches
+        (e.g. "60 days" vs "14 days"). Not a replacement for the real
+        API, but good enough to see realistic verdicts in tests.
 
         Args:
             text: The LLM-generated text to verify.
             source_context: The ground-truth source document(s).
-            mode: Verification mode (ignored in mock).
+            mode: Verification mode (lexical simulation only).
             timeout_ms: Ignored in mock.
-
-        Returns:
-            A ``GuardResponse`` with verdict "verified" and confidence 0.95.
         """
+        import re
         from .http_types import GuardClaim, GuardResponse
+
+        text_numbers = set(re.findall(r'\b\d+(?:\.\d+)?\b', text))
+        source_numbers = set(re.findall(r'\b\d+(?:\.\d+)?\b', source_context))
+        has_mismatch = bool(text_numbers and source_numbers and text_numbers != source_numbers)
+
+        if has_mismatch:
+            return GuardResponse(
+                verdict="rejected",
+                action="block",
+                hallucination_rate=1.0,
+                mode=mode,
+                total_claims=1,
+                supported_claims=0,
+                confidence=0.0,
+                claims=[GuardClaim(
+                    text=text,
+                    claim_type="Fact",
+                    supported=False,
+                    confidence=0.3,
+                    confidence_label="very_low",
+                    verdict="rejected",
+                    action="block",
+                    reason="numerical_mismatch",
+                    evidence=source_context,
+                )],
+                processing_time_ms=0,
+            )
+
         return GuardResponse(
             verdict="verified",
             action="allow",
@@ -188,63 +218,6 @@ class MockHttpClient:
                 evidence=source_context,
             )],
             processing_time_ms=0,
-        )
-
-    def fact_check(
-        self, text: str, source_context: str, mode: str = "lexical",
-    ) -> "FactCheckResponse":
-        """Return mocked fact-check response."""
-        from .http_types import ClaimResult, FactCheckResponse
-        claim = ClaimResult(
-            text=text[:100],
-            claim_type="factual",
-            supported=True,
-            confidence=0.92,
-            confidence_label="high",
-            verdict="verified",
-            action="allow",
-            reason="Matched source context",
-            evidence=source_context[:200],
-        )
-        return FactCheckResponse(
-            verdict="verified",
-            action="allow",
-            hallucination_rate=0.0,
-            mode=mode,
-            total_claims=1,
-            supported_claims=1,
-            confidence=0.92,
-            claims=[claim],
-            processing_time_ms=150,
-        )
-
-    def verify_citation(
-        self, text: str, sources: "list[dict] | None" = None, threshold: "float | None" = None,
-    ) -> "VerifyCitationResponse":
-        """Return mocked citation verification."""
-        from .http_types import VerifyCitationResponse
-        return VerifyCitationResponse(
-            citation_ratio=0.85,
-            has_sufficient_citations=True,
-            sentence_count=5,
-            citation_count=4,
-            uncited_sentences=["This sentence has no citation."],
-            phantom_count=0,
-            processing_time_ms=120,
-        )
-
-    def upload_file(
-        self, file_path: str, title: "str | None" = None, tags: "str | None" = None,
-        timeout_ms: "int | None" = None,
-    ) -> "UploadFileResponse":
-        """Return mocked file upload response."""
-        from .http_types import UploadFileResponse
-        return UploadFileResponse(
-            document_id="mock-doc-file-001",
-            chunks_count=5,
-            indexed_at="2026-01-01T00:00:00Z",
-            content_type="application/pdf",
-            trace_id="mock-trace-001",
         )
 
     # ── Analytics & Insights ────────────────────────────────────────────
