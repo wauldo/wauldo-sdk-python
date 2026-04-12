@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "wauldo"
-version = "0.8.0"
+version = "0.8.1"
 description = "Official Python SDK for Wauldo — Verified AI answers from your documents"
 readme = "README.md"
 license = {text = "MIT"}
@@ -33,18 +33,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-async = ["aiohttp>=3.9.0"]
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0",
     "mypy>=1.0.0",
     "ruff>=0.1.0",
-    "aiohttp>=3.9.0",
 ]
-
-[project.scripts]
-wauldo = "wauldo.cli:main"
 
 [project.urls]
 Homepage = "https://wauldo.com"
