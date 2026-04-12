@@ -89,7 +89,7 @@ _WEAK_BODY = {
 class TestGuardVerified:
     """Guard returns verified when claim matches source."""
 
-    @patch("wauldo.http_client.urlopen")
+    @patch("wauldo.http_transport.urlopen")
     def test_guard_verified(self, mock_urlopen):
         mock_urlopen.return_value = _mock_urlopen_response(_VERIFIED_BODY)
         client = HttpClient(base_url="http://localhost:3000", api_key="test")
@@ -110,7 +110,7 @@ class TestGuardVerified:
 class TestGuardRejected:
     """Guard returns rejected when claim contradicts source."""
 
-    @patch("wauldo.http_client.urlopen")
+    @patch("wauldo.http_transport.urlopen")
     def test_guard_rejected(self, mock_urlopen):
         mock_urlopen.return_value = _mock_urlopen_response(_REJECTED_BODY)
         client = HttpClient(base_url="http://localhost:3000", api_key="test")
@@ -128,7 +128,7 @@ class TestGuardRejected:
 class TestGuardWeak:
     """Guard returns weak when claims are mixed."""
 
-    @patch("wauldo.http_client.urlopen")
+    @patch("wauldo.http_transport.urlopen")
     def test_guard_weak_review(self, mock_urlopen):
         mock_urlopen.return_value = _mock_urlopen_response(_WEAK_BODY)
         client = HttpClient(base_url="http://localhost:3000", api_key="test")
@@ -144,7 +144,7 @@ class TestGuardWeak:
 class TestGuardError:
     """Guard handles HTTP errors gracefully."""
 
-    @patch("wauldo.http_client.urlopen")
+    @patch("wauldo.http_transport.urlopen")
     def test_guard_401(self, mock_urlopen):
         from wauldo.exceptions import WauldoError
         from urllib.error import HTTPError
@@ -163,14 +163,14 @@ class TestGuardError:
 class TestGuardModes:
     """Guard accepts different verification modes."""
 
-    @patch("wauldo.http_client.urlopen")
+    @patch("wauldo.http_transport.urlopen")
     def test_guard_lexical_mode(self, mock_urlopen):
         mock_urlopen.return_value = _mock_urlopen_response(_VERIFIED_BODY)
         client = HttpClient(base_url="http://localhost:3000", api_key="test")
         result = client.guard(text="t", source_context="t", mode="lexical")
         assert result.mode == "lexical"
 
-    @patch("wauldo.http_client.urlopen")
+    @patch("wauldo.http_transport.urlopen")
     def test_guard_hybrid_mode(self, mock_urlopen):
         body = {**_VERIFIED_BODY, "mode": "hybrid"}
         mock_urlopen.return_value = _mock_urlopen_response(body)

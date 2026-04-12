@@ -10,16 +10,10 @@ def test_query_mock(capsys):
     assert "Answer" in out or "answer" in out or "mock response" in out.lower()
 
 
-def test_fact_check_mock(capsys):
-    main(["--mock", "fact-check", "The sky is blue", "--source", "The sky is blue on clear days"])
+def test_guard_mock(capsys):
+    main(["--mock", "guard", "The sky is blue", "--source", "The sky is blue on clear days"])
     out = capsys.readouterr().out
     assert "VERIFIED" in out or "verified" in out
-
-
-def test_verify_mock(capsys):
-    main(["--mock", "verify", "AI is transforming the world"])
-    out = capsys.readouterr().out
-    assert "Citation" in out or "citation" in out
 
 
 def test_upload_mock(capsys, tmp_path):

@@ -40,9 +40,9 @@ def test_async_client_has_methods():
     for name in [
         "list_models", "chat", "chat_simple", "chat_stream",
         "embeddings", "rag_upload", "upload_file", "rag_query",
-        "orchestrate", "orchestrate_parallel", "fact_check",
+        "orchestrate", "orchestrate_parallel", "guard",
         "verify_citation", "conversation", "rag_ask",
-        "get_insights_async", "get_analytics_async", "get_analytics_traffic_async",
+        "get_insights", "get_analytics", "get_analytics_traffic",
     ]:
         assert hasattr(client, name), f"missing method: {name}"
         assert callable(getattr(client, name))
